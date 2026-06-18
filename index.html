@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#185FA5">
+<meta name="description" content="Simulação educativa de previdência privada PGBL">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Simulador PGBL</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --azul:#185FA5;--azul-esc:#0C447C;--azul-cl:#E6F1FB;
+  --verde:#1A7A4A;--verde-cl:#EAF3DE;--verde-esc:#27500A;
+  --cinza-bg:#F5F6F8;--cinza-borda:#DEE1E6;--cinza-txt:#555;
+  --amarelo-bg:#FFF8E1;--amarelo-txt:#7B5800;
+  --branco:#fff;--preto:#111;
+  --radius:10px;--shadow:0 1px 4px rgba(0,0,0,.08);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --azul:#4A9EE0;--azul-esc:#82C1F5;--azul-cl:#0C2D4A;
+    --verde:#3DBD77;--verde-cl:#0D2E1E;--verde-esc:#7FD9A8;
+    --cinza-bg:#1A1C20;--cinza-borda:#2E3138;--cinza-txt:#aaa;
+    --amarelo-bg:#2A2000;--amarelo-txt:#FFD166;
+    --branco:#1E2026;--preto:#F0F0F0;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--cinza-bg);color:var(--preto);font-size:15px;line-height:1.5}
+header{background:var(--azul);color:#fff;padding:14px 20px 12px;
+  display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.logo{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px}
+header h1{font-size:16px;font-weight:600}
+header p{font-size:12px;opacity:.8}
+main{max-width:900px;margin:0 auto;padding:16px}
+.aviso{background:var(--amarelo-bg);color:var(--amarelo-txt);padding:11px 14px;
+  border-radius:var(--radius);font-size:13px;line-height:1.5;margin-bottom:16px}
+.aviso strong{font-weight:600}
+.card{background:var(--branco);border:1px solid var(--cinza-borda);
+  border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.sec-titulo{font-size:14px;font-weight:600;color:var(--azul);margin-bottom:12px;
+  padding-bottom:8px;border-bottom:1px solid var(--cinza-borda)}
+.ctrl{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.ctrl label{font-size:13px;color:var(--cinza-txt);flex:0 0 200px}
+.ctrl input[type=range]{flex:1;min-width:120px;accent-color:var(--azul)}
+.ctrl .vl{font-size:13px;font-weight:600;color:var(--preto);min-width:90px;text-align:right}
+@media(max-width:520px){
+  .ctrl label{flex:0 0 100%;margin-bottom:2px}
+  .ctrl .vl{min-width:70px}
+}
+.metricas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.met{background:var(--branco);border:1px solid var(--cinza-borda);
+  border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+.met.azul{background:var(--azul-cl);border-color:var(--azul)}
+.met.verde{background:var(--verde-cl);border-color:var(--verde)}
+.met .lbl{font-size:11px;color:var(--cinza-txt);margin-bottom:4px}
+.met .val{font-size:20px;font-weight:700;color:var(--azul)}
+.met.verde .val{color:var(--verde)}
+.met .sub{font-size:11px;color:var(--cinza-txt);margin-top:2px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tab{font-size:12px;padding:6px 12px;border:1px solid var(--cinza-borda);
+  border-radius:20px;background:transparent;cursor:pointer;color:var(--cinza-txt)}
+.tab.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
+th{background:var(--azul);color:#fff;padding:8px 10px;text-align:right;font-weight:600;white-space:nowrap}
+th:first-child,td:first-child{text-align:center}
+td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--cinza-borda);color:var(--preto)}
+tr:nth-child(even) td{background:var(--cinza-bg)}
+tr.tot td{font-weight:700;background:var(--azul-cl);border-top:2px solid var(--azul)}
+.chart-wrap{position:relative;height:220px;margin:8px 0 4px}
+.legenda{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--cinza-txt);margin-bottom:6px}
+.legenda span{display:flex;align-items:center;gap:5px}
+.legenda b{display:inline-block;width:12px;height:3px;border-radius:2px}
+.inst-box{background:var(--azul-cl);border:1px solid var(--azul);border-radius:var(--radius);padding:14px;margin-top:4px}
+.inst-box h3{font-size:13px;font-weight:600;color:var(--azul-esc);margin-bottom:8px}
+.inst-box ol{padding-left:18px;font-size:13px;color:var(--cinza-txt);display:flex;flex-direction:column;gap:5px}
+.inst-box ol li strong{color:var(--preto)}
+.inst-box code{background:rgba(0,0,0,.08);padding:1px 5px;border-radius:4px;font-size:12px}
+footer{text-align:center;font-size:11px;color:var(--cinza-txt);padding:20px 16px 32px;line-height:1.6}
+.offline-badge{display:none;font-size:11px;background:var(--verde-cl);color:var(--verde-esc);
+  padding:3px 10px;border-radius:20px;margin-left:auto;border:1px solid var(--verde)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">P</div>
+  <div>
+    <h1>Simulador PGBL</h1>
+    <p>Eficiência tributária — simulação educativa</p>
+  </div>
+  <span class="offline-badge" id="offBadge">● offline</span>
+</header>
+
+<main>
+  <div class="aviso">
+    <strong>Atenção:</strong> Simulação educativa com premissas simplificadas. Não considera inflação, variação do CDI nem taxas reais do fundo. Não é recomendação de investimento.
+  </div>
+
+  <div class="card">
+    <p class="sec-titulo">Parâmetros</p>
+    <div class="ctrl">
+      <label>Renda bruta anual</label>
+      <input type="range" id="renda" min="40000" max="400000" step="5000" value="120000">
+      <span class="vl" id="renda-v">R$ 120.000</span>
+    </div>
+    <div class="ctrl">
+      <label>Aporte no PGBL (% da renda, máx. 12%)</label>
+      <input type="range" id="pct" min="1" max="12" step="0.5" value="12">
+      <span class="vl" id="pct-v">12%</span>
+    </div>
+    <div class="ctrl">
+      <label>CDI projetado (% a.a.)</label>
+      <input type="range" id="cdi" min="5" max="16" step="0.5" value="10">
+      <span class="vl" id="cdi-v">10%</span>
+    </div>
+    <div class="ctrl">
+      <label>Taxa de administração do fundo (% a.a.)</label>
+      <input type="range" id="taxa" min="0" max="3" step="0.25" value="0">
+      <span class="vl" id="taxa-v">0%</span>
+    </div>
+    <div class="ctrl">
+      <label>Anos de acumulação</label>
+      <input type="range" id="anos" min="5" max="20" step="1" value="10">
+      <span class="vl" id="anos-v">10 anos</span>
+    </div>
+    <div id="alerta-renda" class="aviso" style="display:none;margin-top:8px;margin-bottom:0"></div>
+  </div>
+
+  <div class="metricas">
+    <div class="met azul">
+      <div class="lbl">Aporte anual (PGBL)</div>
+      <div class="val" id="m-aporte">—</div>
+      <div class="sub" id="m-aporte-s">12% da renda</div>
+    </div>
+    <div class="met azul">
+      <div class="lbl">Economia de IR / ano</div>
+      <div class="val" id="m-econ">—</div>
+      <div class="sub">Alíquota marginal 27,5%</div>
+    </div>
+    <div class="met azul">
+      <div class="lbl">Custo de bolso total</div>
+      <div class="val" id="m-custo">—</div>
+      <div class="sub">Aportes − economia IR</div>
+    </div>
+    <div class="met verde">
+      <div class="lbl">Vantagem líquida do PGBL</div>
+      <div class="val" id="m-vant">—</div>
+      <div class="sub" id="m-vant-s">vs. convencional</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="sec-titulo">Evolução patrimonial comparada</p>
+    <div class="legenda">
+      <span><b style="background:#185FA5;height:3px"></b>PGBL (saldo bruto)</span>
+      <span><b style="background:#1A7A4A;height:3px;border-top:2px dashed #1A7A4A;background:none;width:16px"></b>Convencional</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chartAcum" role="img" aria-label="Evolução do saldo acumulado PGBL vs Convencional"></canvas></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <div class="met azul" style="margin:0">
+        <div class="lbl">PGBL — total líquido resgatado</div>
+        <div class="val" id="m-pgbl-liq">—</div>
+        <div class="sub">IR 10% sobre bruto (&gt;10 anos)</div>
+      </div>
+      <div class="met" style="margin:0">
+        <div class="lbl">Convencional — total líquido</div>
+        <div class="val" id="m-alt-liq">—</div>
+        <div class="sub">IR 15% sobre ganho (&gt;720 dias)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="sec-titulo">Tabelas detalhadas</p>
+    <div class="tabs">
+      <button class="tab on" onclick="tab('acum',this)">Acumulação</button>
+      <button class="tab" onclick="tab('frui',this)">Fruição (tranches)</button>
+      <button class="tab" onclick="tab('comp',this)">Comparação</button>
+    </div>
+    <div class="tbl-wrap">
+      <div id="p-acum">
+        <table>
+          <thead><tr><th>Ano</th><th>Aporte</th><th>Economia IR</th><th>Juros PGBL</th><th>Saldo PGBL</th><th>Saldo Conv.</th></tr></thead>
+          <tbody id="b-acum"></tbody>
+        </table>
+      </div>
+      <div id="p-frui" style="display:none">
+        <table>
+          <thead><tr><th>Saque</th><th>Origem</th><th>Bruto PGBL</th><th>IR 10%</th><th>Líq. PGBL</th><th>Líq. Conv.</th></tr></thead>
+          <tbody id="b-frui"></tbody>
+        </table>
+      </div>
+      <div id="p-comp" style="display:none">
+        <table>
+          <thead><tr><th style="text-align:left">Indicador</th><th>PGBL</th><th>Convencional</th><th>Diferença</th></tr></thead>
+          <tbody id="b-comp"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="inst-box">
+    <h3>Como instalar este app no seu dispositivo</h3>
+    <ol>
+      <li><strong>Android (Chrome):</strong> toque no menu <code>⋮</code> → <em>Adicionar à tela inicial</em> → Instalar</li>
+      <li><strong>iPhone/iPad (Safari):</strong> toque em <code>Compartilhar ↑</code> → <em>Adicionar à Tela de Início</em></li>
+      <li><strong>Windows/Mac (Chrome ou Edge):</strong> clique no ícone <code>⊕</code> na barra de endereço → Instalar</li>
+      <li>Após instalar, o app abre sem navegador e funciona <strong>completamente offline</strong>.</li>
+    </ol>
+  </div>
+</main>
+
+<footer>
+  Simulação educativa — não constitui recomendação de investimento.<br>
+  Consulte um Planejador Financeiro Certificado (CFP) para decisões reais.
+</footer>
+
+<script src="chart.umd.min.js"></script>
+<script>
+let chartInst=null;
+function brl(v){return'R$ '+Math.round(v).toLocaleString('pt-BR')}
+
+function calc(){
+  const renda=+document.getElementById('renda').value;
+  const pct=+document.getElementById('pct').value/100;
+  const cdi=+document.getElementById('cdi').value/100;
+  const taxa=+document.getElementById('taxa').value/100;
+  const anos=+document.getElementById('anos').value;
+  const aliqM=0.275;
+  const aporte=renda*pct;
+  const econ=aporte*aliqM;
+  const apAlt=aporte-econ;
+  const cdiLiq=cdi-taxa;
+
+  document.getElementById('renda-v').textContent=brl(renda);
+  document.getElementById('pct-v').textContent=(pct*100).toFixed(1)+'%';
+  document.getElementById('cdi-v').textContent=(cdi*100).toFixed(1)+'%';
+  document.getElementById('taxa-v').textContent=(taxa*100).toFixed(2)+'%';
+  document.getElementById('anos-v').textContent=anos+' anos';
+
+  const al=document.getElementById('alerta-renda');
+  if(renda<55976){al.style.display='block';al.innerHTML='<strong>Atenção:</strong> Renda abaixo de ~R$ 55.976/ano pode ter alíquota marginal inferior a 27,5%. A economia real de IR será menor.';}
+  else al.style.display='none';
+
+  let sP=0,sA=0;
+  const acum=[];
+  for(let a=1;a<=anos;a++){
+    sP+=aporte; const jP=sP*cdiLiq; sP+=jP;
+    sA+=apAlt;  const jA=sA*cdi;   sA+=jA;
+    acum.push({a,aporte,econ,jP,sP,jA,sA});
+  }
+
+  const tBrP=aporte*Math.pow(1+cdiLiq,anos);
+  const ir10=tBrP*0.10, tLiqP=tBrP-ir10;
+  const tBrA=apAlt*Math.pow(1+cdi,anos);
+  const ganho=Math.max(0,tBrA-apAlt);
+  const irA=ganho*0.15, tLiqA=tBrA-irA;
+  const totLiqP=tLiqP*anos, totLiqA=tLiqA*anos;
+  const custo=apAlt*anos, vant=totLiqP-totLiqA;
+
+  document.getElementById('m-aporte').textContent=brl(aporte);
+  document.getElementById('m-aporte-s').textContent=Math.round(pct*100)+'% da renda'+(taxa>0?' (taxa '+( taxa*100).toFixed(2)+'% já deduzida)':'');
+  document.getElementById('m-econ').textContent=brl(econ);
+  document.getElementById('m-custo').textContent=brl(custo);
+  document.getElementById('m-pgbl-liq').textContent=brl(totLiqP);
+  document.getElementById('m-alt-liq').textContent=brl(totLiqA);
+  document.getElementById('m-vant').textContent=brl(vant);
+  document.getElementById('m-vant-s').textContent='Mult. PGBL '+(totLiqP/custo).toFixed(2)+'x | Conv. '+(totLiqA/custo).toFixed(2)+'x';
+
+  // Tabela acumulação
+  let ha='';
+  acum.forEach((r,i)=>{
+    ha+=`<tr><td>${r.a}</td><td>${brl(r.aporte)}</td><td>${brl(r.econ)}</td><td>${brl(r.jP)}</td><td>${brl(r.sP)}</td><td>${brl(r.sA)}</td></tr>`;
+  });
+  ha+=`<tr class="tot"><td>Total</td><td>${brl(aporte*anos)}</td><td>${brl(econ*anos)}</td><td>${brl(acum[anos-1].sP-aporte*anos)}</td><td>${brl(acum[anos-1].sP)}</td><td>${brl(acum[anos-1].sA)}</td></tr>`;
+  document.getElementById('b-acum').innerHTML=ha;
+
+  // Tabela fruição
+  let hf='';
+  for(let i=0;i<anos;i++){
+    hf+=`<tr><td>Ano ${anos+1+i}</td><td>Aporte ${i+1}</td><td>${brl(tBrP)}</td><td>${brl(ir10)}</td><td>${brl(tLiqP)}</td><td>${brl(tLiqA)}</td></tr>`;
+  }
+  hf+=`<tr class="tot"><td>Total</td><td>—</td><td>${brl(tBrP*anos)}</td><td>${brl(ir10*anos)}</td><td>${brl(totLiqP)}</td><td>${brl(totLiqA)}</td></tr>`;
+  document.getElementById('b-frui').innerHTML=hf;
+
+  // Tabela comparação
+  const rows=[
+    ['Custo de bolso total',custo,custo],
+    ['Total bruto resgatado',tBrP*anos,tBrA*anos],
+    ['Total IR pago',ir10*anos,irA*anos],
+    ['Total líquido recebido',totLiqP,totLiqA],
+  ];
+  let hc='';
+  rows.forEach((r,i)=>{
+    const d=r[1]-r[2];
+    const dc=d>0?'color:var(--verde)':d<0?'color:#c0392b':'';
+    const dt=d===0?'—':(d>0?'+':'')+brl(d);
+    hc+=`<tr><td style="text-align:left">${r[0]}</td><td>${brl(r[1])}</td><td>${brl(r[2])}</td><td style="${dc}">${dt}</td></tr>`;
+  });
+  hc+=`<tr class="tot"><td style="text-align:left">Multiplicador s/ custo de bolso</td><td>${(totLiqP/custo).toFixed(2)}x</td><td>${(totLiqA/custo).toFixed(2)}x</td><td style="color:var(--verde)">+${((totLiqP/custo)-(totLiqA/custo)).toFixed(2)}x</td></tr>`;
+  document.getElementById('b-comp').innerHTML=hc;
+
+  // Gráfico
+  const labels=acum.map(r=>r.a);
+  const dP=acum.map(r=>Math.round(r.sP));
+  const dA=acum.map(r=>Math.round(r.sA));
+  if(chartInst)chartInst.destroy();
+  chartInst=new Chart(document.getElementById('chartAcum'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'PGBL',data:dP,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,.08)',fill:true,tension:.3,pointRadius:2,borderWidth:2},
+      {label:'Convencional',data:dA,borderColor:'#1A7A4A',backgroundColor:'rgba(26,122,74,.08)',fill:true,tension:.3,pointRadius:2,borderWidth:2,borderDash:[5,4]}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+brl(c.parsed.y)}}},
+      scales:{
+        x:{ticks:{font:{size:11}},grid:{color:'rgba(128,128,128,.1)'}},
+        y:{ticks:{callback:v=>brl(v),font:{size:11},maxTicksLimit:5},grid:{color:'rgba(128,128,128,.1)'}}
+      }
+    }
+  });
+}
+
+function tab(id,btn){
+  ['acum','frui','comp'].forEach(t=>{
+    document.getElementById('p-'+t).style.display=t===id?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+['renda','pct','cdi','taxa','anos'].forEach(id=>
+  document.getElementById(id).addEventListener('input',calc)
+);
+
+calc();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./service-worker.js').then(()=>{
+      window.addEventListener('online', ()=>document.getElementById('offBadge').style.display='none');
+      window.addEventListener('offline',()=>document.getElementById('offBadge').style.display='inline-block');
+      if(!navigator.onLine) document.getElementById('offBadge').style.display='inline-block';
+    });
+  });
+}
+</script>
+</body>
+</html>
